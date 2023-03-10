@@ -1,0 +1,75 @@
+﻿@page "/timetracker"
+
+@inject TimeEntryService _tdb
+@inject ProjectService _pdb
+@inject ClientService _cdb
+@inject StaticDataService _st
+
+<h4>Time Entry</h4>
+<Entry timeEntry="timeEntry" OnStop="Stop"></Entry>
+<hr/>
+@if (userEntries != null)
+{
+
+    @foreach (var u in userEntries.Result)
+    {
+        <DisplayEntry timeEntry="u" OnContinue="Continue"></DisplayEntry>
+    }
+    <hr/>
+    <Pager TotalSize="@userEntries.count" PageSize="16" Paged="OnPaged"></Pager>
+}
+
+@code{
+
+    [CascadingParameter]
+    ActiveUser user { get; set; } = null!;
+
+    public EntryView? timeEntry { get; set; }
+
+    protected PagedResult<EntryView> userEntries = new PagedResult<EntryView>();
+
+    int page = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await GetRunningEntry();
+            await OnPaged(1);
+        }
+        catch (Exception ex)
+        {
+            var xx = ex.Message;
+        }
+
+    }
+
+    protected async Task Stop()
+    {
+        await OnPaged(page);
+        await GetRunningEntry();
+
+    }
+    protected async Task Continue()
+    {
+        await GetRunningEntry();
+        await OnPaged(page);
+        //StateHasChanged();
+    }
+
+    protected async Task OnPaged(int _page)
+    {
+        page = _page;
+        userEntries = await _tdb.GetPagedTimeEntriesAsync(user.Id,page);
+    }
+
+    private async Task GetRunningEntry()
+    {
+        timeEntry = await _tdb.GetRunningEntryDisplayAsync(user.Id);
+        if (timeEntry.ProjectId >0)
+        {
+            timeEntry.ActiveProject = _st.Projects.First(p => p.Id == timeEntry.ProjectId);
+            timeEntry.Client = _st.Clients.First(c => c.Id == timeEntry.ActiveProject.ClientId).Name;
+        }
+    }
+}

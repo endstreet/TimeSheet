@@ -1,0 +1,136 @@
+﻿
+
+@inject StaticDataService _st
+@namespace Trm.MaLogger.App.Pages.Components
+
+<div class="p-1 m-2 bg-primary-subtle border border-primary rounded" >
+    <div class="alert alert-primary p-1 m-1" style="height:auto;">
+    <label>Filter by:&nbsp; </label>
+        @foreach (var col in filteredColumns.Where(t => t.ValueType == "Date"))
+        {
+            <div class="input-group mb-1">
+            <button type="button" class="btn btn-secondary btn-sm" @onclick="@(() => RemoveFilter(col))"><span class="oi oi-x"></span>&nbsp;@col.Name</button>
+             <input type="date" class="form-control form-control-sm" @onchange="@((args) => OnDateSelect(args,col.Name))" value="@col.Value">
+            </div>
+        }
+        @foreach (var col in filteredColumns.Where(t => t.ValueType == "Select"))
+        {
+            @if (col.Name == "Project")
+            {
+                <div class="input-group mb-1">
+                <button type="button" class="btn btn-secondary btn-sm" @onclick="@(() => RemoveFilter(col))"><span class="oi oi-x"></span>&nbsp;@col.Name</button>
+                <select class="btn btn-outline-secondary dropdown-toggle project" @onchange="@((args) => OnSelectSelect(args,col.Name))" value="@col.Value">
+                    @foreach (var client in _st.Clients)
+                    {
+                        <option class="form-control  form-control-sm" value="" hidden>Select project</option>
+                        <option class="form-control form-control-sm bg-secondary" style="color:white" value="" disabled>@client.Name</option>
+                        @foreach (Project project in _st.Projects.Where(p => p.ClientId == client.Id))
+                        {
+                            <option class="form-control form-control-sm" style="color:@project.Color;width:fit-content;text-align:left;" value="@project.Id">@project.Name</option>
+                        }
+                    }
+                </select>
+                </div>
+            }
+             @if (col.Name == "Client")
+            {
+                <div class="input-group mb-1">
+                    <button type="button" class="btn btn-secondary btn-sm" @onclick="@(() => RemoveFilter(col))"><span class="oi oi-x"></span>&nbsp;@col.Name</button>
+                <select class="btn btn-outline-secondary dropdown-toggle project" @onchange="@((args) => OnSelectSelect(args,col.Name))" value="@col.Value">
+                    @foreach (var client in _st.Clients)
+                    {
+                        <option class="form-control form-control-sm bg-secondary" style="color:white" value="@client.Id" >@client.Name</option>
+                    }
+                </select>
+                </div>
+            }
+        }
+        @foreach (var col in filteredColumns.Where(t => t.ValueType == "Text"))
+        {
+            <div class="input-group mb-1">
+                <button type="button" class="btn btn-secondary btn-sm" @onclick="@(() => RemoveFilter(col))"><span class="oi oi-x"></span>&nbsp;@col.Name</button>
+                <input type="text" class="form-control form-control-sm" @onchange="@((args) => OnSelectText(args,col.Name))" value="@col.Value">
+            </div>
+        }
+</div>
+    <div class="alert alert-secondary p-1 m-1" style="height:2.6rem;">
+    <label>Select Columns:&nbsp; </label>
+    @foreach (ReportFilter filter in selectedColumns)
+    {
+        <button type="button" class="btn btn-secondary btn-sm" @onclick="@(() => AddFilter(filter))"><span class="oi oi-plus"></span>&nbsp;@filter.Name</button>
+    }
+    <div style="float:right;">
+        <button type="button" class="btn btn-primary btn-sm" @onclick="Reset">Reset</button>
+    </div>
+</div>
+</div>
+
+@code
+{
+
+    [Parameter]
+    public EventCallback<List<ReportFilter>> OnFiltered { get; set; }
+
+    List<ReportFilter> allColumns { get; set; } = new List<ReportFilter>();
+
+    protected List<ReportFilter> filteredColumns = new List<ReportFilter>();
+    protected List<ReportFilter> selectedColumns = new List<ReportFilter>();
+
+    protected void OnDateSelect(ChangeEventArgs e,string key)
+    {
+        if (e.Value != null)
+        {
+            filteredColumns.Where(f => f.Name == key).First().Value = e.Value;
+        }
+
+    }
+    protected void OnSelectSelect(ChangeEventArgs e, string key)
+    {
+        if (e.Value != null)
+        {
+            filteredColumns.Where(f => f.Name == key).First().Value = (string)e.Value;
+        }
+    }
+    protected void OnSelectText(ChangeEventArgs e, string key)
+    {
+        if (e.Value != null)
+        {
+            filteredColumns.Where(f => f.Name == key).First().Value = (string)e.Value;
+        }
+    }
+    protected override void OnInitialized()
+    {
+        allColumns.Add(new ReportFilter("FromDate", "Date", DateTime.Now.AddDays(-30)));
+        allColumns.Add(new ReportFilter("ToDate", "Date", DateTime.Now));
+        allColumns.Add(new ReportFilter("Client", "Select", ""));
+        allColumns.Add(new ReportFilter("Project", "Select", ""));
+        allColumns.Add(new ReportFilter("Description", "Text", ""));
+        Reset();
+    }
+
+    protected void Reset()
+    {
+        selectedColumns = allColumns.Select(t => t).ToList();
+        filteredColumns = new List<ReportFilter>();
+        Filtered();
+    }
+    protected void RemoveFilter(ReportFilter filter)
+    {
+        filteredColumns.Remove(filteredColumns.Where(f => f.Name == filter.Name).First());
+        selectedColumns.Add(filter);
+        Filtered();
+    }
+
+    protected void AddFilter(ReportFilter filter)
+    {
+        filteredColumns.Add(filter);
+        selectedColumns.Remove(selectedColumns.Where(s => s.Name == filter.Name).First());
+        Filtered();
+    }
+
+    protected void Filtered()
+    {
+        OnFiltered.InvokeAsync(filteredColumns);
+    }
+
+}

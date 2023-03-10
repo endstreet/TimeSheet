@@ -1,0 +1,94 @@
+﻿@inject TimeEntryService _tdb
+
+@inject IAlertService toast
+@namespace Trm.MaLogger.App.Pages.Components
+
+<div>
+    <div class="input-group mb-1">
+        <span class="form-control form-control-sm hundredpx lightblue">@timeEntry.StartTime.DateTime.ToShortDateString()</span>
+        <input type="text" class="form-control form-control-sm" placeholder="Description" style="width:25%;" value="@timeEntry.Description" @onchange="(args) => DescriptionUpdated(args)">
+        <span class="form-control form-control-sm hundredpx">@timeEntry.Client</span>
+        <span class="form-control form-control-sm project" style="color:@timeEntry.ActiveProject.Color;">@timeEntry.ActiveProject.Name</span>
+        <input type="time" class="form-control form-control-sm hundredpx" value="@timeEntry.StartTime.ToString("HH:mm")" @onchange="(args) => StartTimeUpdated(args)">
+        <input type="time" class="form-control form-control-sm hundredpx" value="@timeEntry.EndTime.ToString("HH:mm")" @onchange="(args) => EndTimeUpdated(args)">
+        <span type="time" class="form-control form-control-sm ticker">@timeEntry.EntryTime</span>
+        <span class="form-control form-control-sm" @onclick="() => Delete(timeEntry)" style="max-width:40px;"><span class="oi oi-x"></span></span>
+        <span class="form-control form-control-sm" @onclick="() => Continue(timeEntry)" style="max-width:40px;"><span class="oi oi-chevron-right"></span></span>
+    </div>
+</div>
+
+
+@code {
+    [CascadingParameter]
+    ActiveUser user { get; set; } = null!;
+
+    [Parameter]
+    public EntryView timeEntry { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnContinue { get; set; }
+
+    protected Project selectedProject = new Project();
+
+    private async Task Delete(EntryView timeEntry)
+    {
+        await _tdb.RemoveTimeEntryAsync(timeEntry.Id);
+        await OnContinue.InvokeAsync();
+    }
+
+    private async Task Continue(EntryView timeEntry)
+    {
+        TimeEntry? entry = await _tdb.GetRunningTimeEntriesAsync(user.Id);
+        if (entry != null)
+        {
+            toast.Warn("Please stop active task before continuing this one.");
+            return;
+        }
+        await _tdb.ContinueFromEntryAsync(timeEntry);
+        await OnContinue.InvokeAsync();
+    }
+
+    protected async Task EndTimeUpdated(ChangeEventArgs e)
+    {
+        if (e.Value == null) return;
+        string selectedHours = (string)e.Value;
+        double hours;
+        double minutes;
+        if (!double.TryParse(selectedHours.Substring(0, 2), out hours))
+        {
+            return;
+        };
+        if (!double.TryParse(selectedHours.Substring(3, 2), out minutes))
+        {
+            return;
+        };
+        timeEntry.EndTime = timeEntry.EndTime.Date.AddHours(hours).AddMinutes(minutes);
+        await _tdb.UpdateTimeEntryAsync(timeEntry.Id,timeEntry);
+    }
+
+    protected async Task StartTimeUpdated(ChangeEventArgs e)
+    {
+        if (e.Value == null) return;
+        string selectedHours = (string)e.Value;
+        double hours;
+        double minutes;
+        if (!double.TryParse(selectedHours.Substring(0, 2), out hours))
+        {
+            return;
+        };
+        if (!double.TryParse(selectedHours.Substring(3, 2), out minutes))
+        {
+            return;
+        };
+        timeEntry.StartTime = timeEntry.StartTime.Date.AddHours(hours).AddMinutes(minutes);
+        await _tdb.UpdateTimeEntryAsync(timeEntry.Id, timeEntry);
+    }
+
+    protected async Task DescriptionUpdated(ChangeEventArgs e)
+    {
+        if (e.Value == null) return;
+        timeEntry.Description = (string)e.Value;
+        await _tdb.UpdateTimeEntryAsync(timeEntry.Id, timeEntry);
+    }
+
+}

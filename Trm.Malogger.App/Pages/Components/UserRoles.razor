@@ -1,0 +1,79 @@
+﻿@inject UserService _udb
+
+@namespace Trm.MaLogger.App.Pages.Components
+@if (show)
+{
+    <div class="modal" tabindex="-1" style="display:block;" role="dialog">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: dodgerblue">
+                    <h5 class="modal-title">Roles for @user.Name</h5>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <select class="form-select" @bind="selectedRoles" multiple>
+                        <option class="form-control form-control-sm bg-secondary" style="color:white" selected>Select user Roles</option>
+                        @foreach (Role r in roles)
+                        {
+                        <option value="@r.Name">@r.Name</option>
+                        }
+                        </select>
+                    </div>
+                    <br />
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="@(() => show = false)">Cancel</button>
+                        <button class="btn btn-primary active" @onclick="UpdateRoles">Ok</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public User user { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnRolesChanged { get; set; }
+
+    [Parameter]
+    public bool show { get; set; }
+
+    protected List<Role> userroles = new List<Role>();
+    protected string[] selectedRoles = new string[1];
+
+    protected List<Role> roles = new List<Role>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        userroles = await _udb.GetUsersRolesAsync(user.Id );
+        roles = await _udb.GetRolesAsync();
+        selectedRoles = userroles.Select(u => u.Name).ToArray();
+    }
+
+    private async Task UpdateRoles()
+    {
+        //Update all roles for this user
+        foreach(Role role in roles)
+        {
+            if(selectedRoles.Contains(role.Name))
+            {
+                if (!userroles.Contains(role))
+                {
+                    UserRole newUserRole = new UserRole() { RoleId = role.Id, UserId = user.Id };
+                    await _udb.CreateUserRoleAsync(newUserRole);
+                }
+            }
+            else
+            {
+                if (role.Name != "User")//Lets NOT delete the basic User role
+                {
+                    await _udb.RemoveUserRoleAsync(role.Id , user.Id );
+                }
+            }
+        }
+        await OnRolesChanged.InvokeAsync();
+    }
+}

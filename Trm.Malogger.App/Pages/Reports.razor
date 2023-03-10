@@ -1,0 +1,100 @@
+﻿@page "/reports"
+
+@inject ReportDataService rs
+@inject IAlertService toast
+@inject NavigationManager nav
+
+
+    @if (user.IsInRole(new List<string>() { "User" }))
+    {
+        <h4>Reports</h4>
+        <div>
+            <div class="row">
+                <div class="col">
+                <FilterBy OnFiltered="OnFiltered"></FilterBy>
+                </div>
+                <div class="col">
+                <GroupBy OnGrouped="OnGrouped" allColumns="@(new List<string>{"User","Client","Project","Description"})"></GroupBy>
+                </div>
+            </div>
+        </div>
+                <div class="row">
+                    <div class="col">
+                <table>
+                    <tr>
+                        <td>
+                            <div class="input-group input-group-sm mb-1">
+                                    <span class="input-group-text  input-group-sm">Select report</span>
+                                <select class="form-select" @bind="report.Index">
+                                    <option selected>select...</option>
+                                    @foreach (var val in rs.reportList)
+                                    {
+                                        <option value="@val.Key">@val.Value</option>
+                                    }
+                                </select>
+@*                                <button class="btn btn-primary btn-sm active" @onclick="@(() => btnExport_Click("csv"))">Save(.csv)</button>*@
+                                <button class="btn btn-primary btn-sm active" @onclick="@(() => btnExport_Click("xlsx"))">Download</button>
+                            </div>
+                        </td>
+
+                    </tr>
+                </table>
+                </div>
+            </div>
+
+    }
+    else
+    {
+        <h4>Unauthorized</h4>
+    }
+
+
+
+@code {
+    [CascadingParameter]
+    ActiveUser user { get; set; } = null!;
+
+    ReportDefinition report = null!;
+
+    string index = "1";
+
+    protected override void OnInitialized()
+    {
+        report = new ReportDefinition(index);
+    }
+
+    private void btnExport_Click(string fileFormat)
+    {
+        try
+        {
+            string filename = rs.GetFileName(report.Index, user.Name, fileFormat);
+            if(report.sortOrder.Count == 0 && report.Index == "2")
+            {
+                toast.Warn("No grouping selected for Summary.");
+                return;
+            }
+            Report output = new Report(user.Name, filename, $".{fileFormat}", rs.GetReportContent(user, report, fileFormat));
+            rs.SaveReport(output);
+            toast.Info($"{rs.reportList[report.Index]} sent.");
+            nav.NavigateTo($"/File/{filename}", true);
+
+        }
+        catch (Exception ex)
+        {
+            toast.Error(ex.Message); //Todo: remove catch ... See what's going on for dev cycle
+        }
+
+    }
+
+
+    protected void OnGrouped(List<string> columns)
+    {
+        report.sortOrder = columns;
+    }
+
+    protected void OnFiltered(List<ReportFilter> filters)
+    {
+        report.Filters = filters;
+    }
+
+}

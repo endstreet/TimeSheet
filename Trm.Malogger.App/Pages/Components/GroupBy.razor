@@ -1,0 +1,66 @@
+﻿@namespace Trm.MaLogger.App.Pages.Components
+
+<div class="p-1 m-2 bg-primary-subtle border border-primary rounded" >
+    <div class="alert alert-primary p-1 m-1" style="height:2.6rem;">
+    <label>Group by:&nbsp; </label>
+    @foreach(string col in groupedColumns)
+    {
+     <button type="button" class="btn btn-secondary btn-sm" @onclick="@(() => RemoveGroup(col))"><span class="oi oi-x"></span>&nbsp;@col</button>
+    }
+@*    <div style="float:right;">
+         <button type="button" class="btn btn-primary btn-sm" @onclick="Grouped">Ok</button>
+    </div>*@
+</div>
+    <div class="alert alert-secondary p-1 m-1" style="height:2.6rem;">
+    <label>Select Columns:&nbsp; </label>
+    @foreach (string col in colNames)
+    {
+        <button type="button" class="btn btn-secondary btn-sm" @onclick="@(() => AddGroup(col))"><span class="oi oi-plus"></span>&nbsp;@col</button>
+    }
+    <div style="float:right;">
+        <button type="button" class="btn btn-primary btn-sm" @onclick="Reset">Reset</button>
+    </div>
+</div>
+</div>
+
+@code 
+{
+    [Parameter]
+    public List<string> allColumns { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<List<string>> OnGrouped { get; set; }
+
+    protected List<string> groupedColumns = new List<string>();
+    protected List<string> colNames = new List<string>();
+
+    protected override void OnInitialized()
+    {
+        Reset();
+    }
+
+    protected void Reset()
+    {
+        colNames = allColumns.Select(s => s).ToList();
+        groupedColumns = new List<string>();
+        Grouped();
+    }
+    protected void RemoveGroup(string column)
+    {
+        groupedColumns.Remove(column);
+        colNames.Add(column);
+        Grouped();
+    }
+
+    protected void AddGroup(string column)
+    {
+        groupedColumns.Add(column);
+        colNames.Remove(column);
+        Grouped();
+    }
+
+    protected void Grouped()
+    {
+        OnGrouped.InvokeAsync(groupedColumns);
+    }
+}

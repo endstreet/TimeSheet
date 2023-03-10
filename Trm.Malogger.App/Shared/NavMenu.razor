@@ -1,0 +1,50 @@
+﻿
+@inject NavigationManager nav
+
+@namespace Trm.MaLogger.App.Shared
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        @if (user.IsInRole(new List<string>() { "User" }))
+        {
+        <div class="nav-item">
+            <NavLink class="nav-link" href="timetracker">
+                <span class="oi oi-clock" aria-hidden="true"></span> Time Entry
+            </NavLink>
+        </div>
+        
+        <div class="nav-item">
+            <NavLink class="nav-link" href="reports">
+                <span class="oi oi-clock" aria-hidden="true"></span> Reports
+            </NavLink>
+        </div>
+        }
+         @if (user.IsInRole(new List<string>() { "Admin" }))
+        {
+            <div class="nav-item" >
+                <NavLink class="nav-link" href="admin">
+                    <span class="oi oi-clock" aria-hidden="true"></span> Admin
+                </NavLink>
+            </div>
+        }
+    </nav>
+</div>
+
+@code {
+    [CascadingParameter]
+    public ActiveUser user { get; set; } = null!;
+
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

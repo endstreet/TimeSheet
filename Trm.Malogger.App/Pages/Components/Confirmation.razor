@@ -1,0 +1,40 @@
+﻿@namespace Trm.MaLogger.App.Pages.Components
+<!-- Bootstrap Modal Dialog -->
+@if (Dialog.Show)
+{
+    <div class="modal" tabindex="-1" style="display:block;" role="dialog">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header modal-sm" style="background-color: dodgerblue">
+                    <h5 class="modal-title">@Dialog.Title</h5>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <p>@Dialog.Message</p>
+                    </div>
+                    <br />
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-secondary-sm" @onclick="@(() => Dialog.Show = false)">Cancel</button>
+                        <button class="btn btn-primary btn-secondary-sm active " @onclick="btnOk_Click">Ok</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public DialogModel Dialog { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnOk { get; set; }
+
+    protected void btnOk_Click()
+    {
+        OnOk.InvokeAsync();
+    }
+
+}
+

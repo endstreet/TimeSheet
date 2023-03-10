@@ -1,0 +1,187 @@
+﻿@inject TimeEntryService _tdb
+@inject ProjectService _pdb
+@inject ClientService _cdb
+@inject StaticDataService _st
+
+@inject IAlertService toast
+@namespace Trm.MaLogger.App.Pages.Components
+
+<div>
+    @if(timeEntry != null)
+    {
+    <div class="input-group mb-1">
+        <input type="text" class="form-control form-control-sm" value="@timeEntry.Description" @onchange="UpdateDescription" placeholder="Task description" style="width:25%;">
+        <span class="form-control form-control-sm client" >@timeEntry.Client</span>
+        <AddProject project="selectedProject" show="showProject" OnProjectEdit="ProjectSave" OnCancel="ProjectCancel"></AddProject>
+        <select class="btn btn-outline-secondary dropdown-toggle project" style="color:@timeEntry.ActiveProject.Color;" @onchange="@((args) => OnSelect(args))" value="@timeEntry.ActiveProject.Id">
+            @foreach (var client in _st.Clients)
+            {
+                <option class="form-control  form-control-sm" value="" hidden>Select project</option>
+                <option class="form-control form-control-sm bg-secondary" style="color:white" value="" disabled>@client.Name</option>
+                @foreach (Project project in _st.Projects.Where(p => p.ClientId == client.Id))
+                {
+                    <option class="form-control form-control-sm" style="color:@project.Color;width:fit-content;text-align:left;" value="@project.Id">@project.Name</option>
+                }
+            }
+        </select>
+        
+        <span class="form-control form-control-sm" style="max-width:40px;"><span class="oi oi-plus" @onclick="() => NewProject()"></span></span>
+        <span class="form-control form-control-sm" style="max-width:40px;"><span class="oi oi-pencil" @onclick="() => EditProject()"></span></span>
+        <span class="form-control form-control-sm time">@timeEntry.StartTime.DateTime.ToShortTimeString()</span>
+        <span class="form-control form-control-sm time">@timeEntry.EndTime.DateTime.ToShortTimeString()</span>
+        <span class="form-control form-control-sm ticker" style="width:fit-content;">@timeEntry.Ticker</span>
+        @if (timeEntry.Running)
+        {
+            <span class="form-control form-control-sm" style="max-width:40px;"><span class="oi oi-media-stop" @onclick="() => Stop()"></span></span>
+            
+        }
+        else
+        {
+            <span class="form-control form-control-sm" style="max-width:40px;"><span class="oi oi-media-play" @onclick="() => Start()"></span></span>
+            
+        }
+    </div>
+    }
+</div>
+
+
+@code {
+    [CascadingParameter]
+    ActiveUser user { get; set; } = null!;
+
+    [Parameter]
+    public EntryView timeEntry { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnStop { get; set; }
+
+    bool showProject = false;
+    protected Project selectedProject = new Project();
+    protected Timer updateTimer = null!;
+
+
+    protected override void OnParametersSet()
+    {
+        if (timeEntry == null) return;
+        if (timeEntry.Running)
+        {
+            updateTimer = new System.Threading.Timer(_ =>
+            {
+                InvokeAsync(() => StateHasChanged());
+            }, null, 0, 1000);
+        }
+        else
+        {
+            updateTimer = new System.Threading.Timer(_ =>
+            {
+                InvokeAsync(() => StateHasChanged());
+            }, null, 0, Timeout.Infinite);
+        }
+        base.OnParametersSet();
+    }
+    private async Task Start()
+    {
+        if (timeEntry.ActiveProject.Id < 1)
+        {
+            toast.Warn("Please select a project for this Task first.");
+            return;
+        }
+        timeEntry.StartTime = DateTime.UtcNow;
+        //timeEntry.EndTime = DateTimeOffset.MinValue;
+        timeEntry.Running = true;
+        await Update(true);
+        if (updateTimer != null)
+        {
+            updateTimer.Change(0, 1000);
+        }
+    }
+
+    private async Task Stop()
+    {
+        if (timeEntry.ActiveProject.Id<1 || string.IsNullOrEmpty(timeEntry.Description))
+        {
+            toast.Warn("Please select a description and project for this Task first.");
+            return;
+        }
+        if (updateTimer != null)
+        {
+            updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
+        }
+        timeEntry.EndTime = DateTime.UtcNow;
+        timeEntry.Running = false;
+        await Update(false);
+        await OnStop.InvokeAsync();
+
+    }
+
+    //Update Description,Project,Time Changes
+    private void UpdateDescription(ChangeEventArgs e)
+    {
+        if (e.Value is not null)
+        {
+            timeEntry.Description = (string)e.Value;
+        }
+        Task.Run(() => Update(false));
+    }
+    private async Task Update(bool create)
+    {
+        int projectId = timeEntry.ActiveProject.Id ;
+        string ClientName = timeEntry.Client;
+
+        if (timeEntry.Id < 1 && create)
+        {
+            timeEntry = await _tdb.CreateTimeEntryAsync(timeEntry);
+        }
+        else if (timeEntry.Id > 0)
+        {
+            timeEntry = await _tdb.UpdateTimeEntryAsync(timeEntry.Id, timeEntry);
+        }
+        if (timeEntry.ProjectId > 0)
+        {
+            timeEntry.ActiveProject = _st.Projects.Where(p => p.Id == projectId).First();
+            timeEntry.Client = ClientName;
+        }
+    }
+
+    protected void NewProject()
+    {
+        updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
+        selectedProject = new Project();
+        showProject = true;
+    }
+
+    protected void EditProject()
+    {
+        updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
+        selectedProject = timeEntry.ActiveProject;
+        showProject = true;
+    }
+
+    protected async Task OnSelect(ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            await ProjectSelect(int.Parse((string)e.Value));
+        }
+    }
+    protected async Task ProjectSelect(int projectId)
+    {
+        timeEntry.ActiveProject = _st.Projects.First(p => p.Id == projectId);
+        timeEntry.Client = _st.Clients.First(c => c.Id == timeEntry.ActiveProject.ClientId).Name;
+        await Update(false);
+    }
+
+    protected async Task ProjectSave(int projectId)
+    {
+        showProject = false;
+        await ProjectSelect(projectId);
+        updateTimer.Change( 0, timeEntry.Running ? 1000 : Timeout.Infinite);
+
+    }
+    protected void ProjectCancel()
+    {
+        showProject = false;
+        updateTimer.Change(0, timeEntry.Running ? 1000 : Timeout.Infinite);
+    }
+
+}

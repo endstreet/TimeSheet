@@ -1,0 +1,19 @@
+﻿.hundredpx {
+    max-width: 100px;
+    min-width: 100px;
+}
+
+.ticker {
+    max-width: 80px;
+    min-width: 80px;
+}
+
+.Project {
+    max-width: 200px;
+    min-width: 150px;
+
+}
+
+.lightblue {
+    background-color:lightblue;
+}

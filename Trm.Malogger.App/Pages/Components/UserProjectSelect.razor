@@ -1,0 +1,102 @@
+﻿@inject UserService _udb;
+@namespace Trm.MaLogger.App.Pages.Components
+<!-- Bootstrap Modal Dialog -->
+@if (show)
+{
+    <div class="modal" tabindex="-1" style="display:block;" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: dodgerblue">
+                    <h5 class="modal-title">User projects</h5>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <table class="table table-sm" style="font-size:small;">
+                    <thead>
+                        <tr>
+                            <th scope="col">Client</th>
+                            <th scope="col">Project</th>
+                            <th scope="col">ProjectManager</th>
+                            <th scope="col">Member</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in projects)
+                        {
+                            <tr >
+                                <td>@u.ClientName</td>
+                                <td>@u.ProjectName</td>
+                               <td>
+                                    <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" @bind="@u.IsProjectManager" id="manager" @onclick="@(() => IsProjectManager(u,true))">
+                                      <label class="form-check-label" for="manager"> Manager </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" @bind="@u.IsProjectMember" id="member" @onclick="@(() => IsProjectManager(u,false))">
+                                      <label class="form-check-label" for="member"> Member </label>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                    </div>
+                    <br />
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-secondary-sm" @onclick="@(() => show = false)">Cancel</button>
+                        <button class="btn btn-primary btn-secondary-sm active " @onclick="btnOk_Click">Ok</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public int UserId { get; set; }
+
+    [Parameter]
+    public EventCallback OnProjectsChanged { get; set; }
+
+    [Parameter]
+    public bool show { get; set; }
+
+    protected List<UserProjectView> projects = new List<UserProjectView>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        projects = await _udb.GetUserProjectViewAsync(UserId);
+    }
+
+    protected void IsProjectManager(UserProjectView project, bool managerClick)
+    {
+        if (managerClick)
+        {
+            if (project.IsProjectMember && !project.IsProjectManager)//Promote 
+            {
+                project.IsProjectMember = false;
+            }
+        }
+        else
+        {
+            if (!project.IsProjectMember && project.IsProjectManager)//Demote
+            {
+                project.IsProjectManager = false;
+            }
+        }
+        
+        StateHasChanged();
+    }
+    protected async Task btnOk_Click()
+    {
+        await _udb.SetUserProjectsAsync(projects,UserId);
+        projects = await _udb.GetUserProjectViewAsync(UserId);
+        await OnProjectsChanged.InvokeAsync();
+    }
+
+}
+

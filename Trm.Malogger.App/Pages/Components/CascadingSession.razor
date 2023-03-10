@@ -1,0 +1,12 @@
+﻿@namespace Trm.MaLogger.App.Pages.Components
+
+@code {
+    public ActiveUser? activeUser { get; set; }
+
+    public void NotifyChange()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}
+
+

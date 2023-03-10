@@ -1,0 +1,78 @@
+﻿@inject UserService _udb
+@inject StaticDataService _st
+
+@namespace Trm.MaLogger.App.Pages.Components
+
+@if (show)
+{
+    <div class="modal" tabindex="-1" style="display:block;" role="dialog">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: dodgerblue">
+                    <h5 class="modal-title">Projects for @user.Name</h5>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <select class="form-select" @bind="selectedProjects" multiple>
+                        <option class="form-control form-control-sm bg-secondary" style="color:white" selected>Select user Projects</option>
+                        @foreach (Project r in _st.Projects)
+                        {
+                        <option value="@r.Name">@r.Name</option>
+                        }
+                        </select>
+                    </div>
+                    <br />
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="@(() => show = false)">Cancel</button>
+                        <button class="btn btn-primary active" @onclick="UpdateProjects">Ok</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public User user { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnProjectsChanged { get; set; }
+
+    [Parameter]
+    public bool show { get; set; }
+
+    protected List<Project> userProjects = new List<Project>();
+    protected string[] selectedProjects = new string[1];
+
+    protected override async Task OnInitializedAsync()
+    {
+        userProjects = await _udb.GetUsersProjectsAsync(user.Id);
+        selectedProjects = userProjects.Select(u => u.Name).ToArray();
+    }
+
+    private async Task UpdateProjects()
+    {
+        //Update all roles for this user
+        foreach(Project project in _st.Projects)
+        {
+            if (selectedProjects.Contains(project.Name))
+            {
+                if (!userProjects.Contains(project))
+                {
+                    UserProject newUserProject = new UserProject() { ProjectId = project.Id , UserId = user.Id  };
+                    await _udb.CreateUserProjectAsync(newUserProject);
+                }
+            }
+            else
+            {
+                if (project.Name != "User")//Lets NOT delete the basic User role
+                {
+                    await _udb.RemoveUserProjectAsync(project.Id , user.Id);
+                }
+            }
+        }
+        await OnProjectsChanged.InvokeAsync();
+    }
+}

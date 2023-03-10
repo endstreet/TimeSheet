@@ -1,0 +1,209 @@
+﻿@page "/admin"
+
+@inject UserService _udb
+@inject ClientService _cdb
+
+@if (user.IsInRole(new List<string>() { "Admin" }))
+{
+    <h4>Admin</h4>
+    <TabControl ActivePageId="1" PageActivate="OnTabActivate">
+        <TabPage Text="Users" Id="1" Enabled="true">
+            @if (showRoleEdit)
+            {
+                <UserRoles user="selectedUser" show="showRoleEdit" OnRolesChanged="LoadUsers"></UserRoles>
+            }
+            @if (showProjectEdit)
+            {
+                <UserProjectSelect UserId="@selectedUser.Id" show="showProjectEdit" OnProjectsChanged="LoadUsers"></UserProjectSelect>
+            }
+            @if(dialog.Show)
+            {
+                <Confirmation Dialog="dialog" OnOk="OnDeleteUserConfirm"></Confirmation>
+            }
+            @if (users != null)
+            {
+                <table class="table table-sm" style="font-size:small;">
+                    <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Action</th>
+                            <th scope="col"></th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        @foreach (var u in users.Result)
+                        {
+                            <tr >
+                                <td>@u.Name</td>
+                                <td>@u.Email</td>
+                                <td><span id="role" class="badge bg-primary" style="cursor: pointer;" @onclick="() => RoleEdit(u)">Roles</span></td>
+                                <td><span id="project" class="badge bg-primary" style="cursor: pointer;" @onclick="() => ProjectEdit(u)">Projects</span></td>
+                                <td><span id="user" class="badge bg-danger" style="cursor: pointer;" @onclick="() => DeleteUser(u)">Delete</span></td>
+                            </tr>
+                        }
+
+                    </tbody>
+                </table>
+            }
+        </TabPage>
+    <TabPage Text="Clients" Id="2" Enabled="true">
+            <div class="input-group mb-1">
+                <span class="input-group-text input-group-sm">Client</span>
+                <input type="text" class="form-control form-control-sm" @bind-value="newClient.Name" placeholder="Client name">
+                <button class="btn btn-primary btn-sm" @onclick="() => AddClient(newClient)">Add Client</button>
+            </div>
+            
+            @if (clients.Result != null)
+            {
+                <table class="table table-sm" style="font-size:small;">
+                    <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Action</th>
+                            <th scope="col"></th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        @foreach (var u in clients.Result)
+                        {
+                            <tr>
+                                <td> <input type="text" class="form-control form-control-sm" @bind-value="u.Name" placeholder="Client name"></td>
+                                <td><span class="badge bg-primary" style="cursor: pointer;" @onclick="@(() => UpdateClient(u))">Update</span></td>
+                                <td><span class="badge bg-danger" style="cursor: pointer;" @onclick="@(() => DeleteClient(u))">Delete</span></td>
+                            </tr>
+                        }
+
+                    </tbody>
+                </table>
+            }
+    </TabPage>
+@*    <TabPage Text="System" Id="3" Enabled="true">
+    </TabPage>*@
+    </TabControl>
+}
+else
+{
+    <h4>Please request Admin role for this function</h4>
+}
+
+@code {
+    [CascadingParameter]
+    public ActiveUser user { get; set; } = null!;
+
+    protected PagedResult<User> users { get; set; } = new PagedResult<User>();
+    protected PagedResult<Client> clients { get; set; } = new PagedResult<Client>();
+
+    protected DialogModel dialog = new DialogModel();
+
+    protected Client newClient { get; set; } = new Client();
+
+    protected User selectedUser  = null!; 
+    protected bool showRoleEdit = false;
+    protected bool showProjectEdit = false;
+
+    protected int UserPage = 1;
+
+    private async Task OnTabActivate(int e)
+    {
+        switch (e)
+        {
+            case 1:
+                await LoadUsers();
+                break;
+            case 2:
+                clients = _cdb.GetPagedClientsAsync();
+                break;
+            //case 3:
+            //    //roles = await _udb.GetRolesAsync();
+            //    break;
+            default:
+                break;
+        }
+    }
+    protected void RoleEdit(User user)
+    {
+        HideDialogs();
+        if (user.Id >0)
+        {
+            selectedUser = user;
+            showRoleEdit = true;
+        }
+    }
+    protected void ProjectEdit(User user)
+    {
+        HideDialogs();
+        if (user.Id >0)
+        {
+            selectedUser = user;
+            showProjectEdit = true;
+        }
+    }
+    protected void DeleteUser(User user)
+    {
+        HideDialogs();
+        if (user.Id >0)
+        {
+            selectedUser = user;
+            dialog.Show = true;
+        }
+    }
+
+    protected async Task OnDeleteUserConfirm()
+    {
+        if (selectedUser.Id >0)
+        {
+            //todo: resist if records exist
+            await _udb.RemoveUserAsync(selectedUser.Id);
+            users = await _udb.GetPagedUsersAsync();
+        }
+        dialog.Show = false;
+    }
+
+    protected async Task AddClient(Client client)
+    {
+        await _cdb.CreateClientAsync(client);
+        clients = _cdb.GetPagedClientsAsync();
+        newClient = new Client();
+    }
+    protected async Task DeleteClient(Client client)
+    {
+        if (client.Id >0)
+        {
+            //todo: resist if records exist
+            await _cdb.RemoveClientAsync(client.Id);
+            clients = _cdb.GetPagedClientsAsync();
+        }
+    }
+    protected async Task UpdateClient(Client client)
+    {
+        if (client.Id >0)
+        {
+            //todo: resist if records exist
+            await _cdb.UpdateClientAsync(client.Id,client);
+            clients = _cdb.GetPagedClientsAsync();
+        }
+    }
+
+    protected async Task OnUserPaged(int userPage)
+    {
+        UserPage = userPage;
+        await LoadUsers();
+    }
+
+    protected async Task LoadUsers()
+    {
+        users = await _udb.GetPagedUsersAsync(UserPage);
+        HideDialogs();
+    }
+    protected void HideDialogs()
+    {
+        showRoleEdit = false;
+        showProjectEdit = false;
+        dialog.Show = false;
+    }
+}

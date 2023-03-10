@@ -1,0 +1,73 @@
+﻿@page "/"
+
+@inject ProjectService _pdb
+@inject ClientService _cdb
+
+@if (user.IsInRole(allowedRoles))
+{
+    <h4>Home</h4>
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <PieChart PieData="@userdata"></PieChart>
+            </div>
+            <div class="col">
+                <PieChart PieData="@codata"></PieChart>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <PieChart PieData="@cuserdata"></PieChart>
+            </div>
+            <div class="col">
+                <PieChart PieData="@ccodata"></PieChart>
+            </div>
+        </div>
+    </div>
+    
+}
+else
+{
+    <h4>Home (anonymous)</h4>
+
+    <img src="images/pyramid.png" /> 
+
+}
+
+@code{
+    //Todo move to component base class
+    [CascadingParameter]
+    ActiveUser user { get; set; } = null!;
+
+    PieData userdata = null!;
+    PieData codata = null!;
+
+    PieData cuserdata = null!;
+    PieData ccodata = null!;
+
+    private List<string> allowedRoles = new List<string>() { "User" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await _pdb.GetProjectsAsync();
+        await _cdb.GetClientsAsync();
+        //Just Sample charts till we know what we want here
+        if (user.IsInRole(allowedRoles))
+        {
+            try
+            {
+                userdata = await _pdb.GetUserPieData(user.Id);
+                codata = await _pdb.GetCoPieData();
+                cuserdata = await _pdb.GetClientUserPieData(user.Id);
+                ccodata = await _pdb.GetClientCoPieData();
+            }
+            catch
+            {
+                
+            }
+        }
+    }
+
+
+}

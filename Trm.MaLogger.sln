@@ -1,0 +1,62 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33110.190
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trm.MaLogger.App", "Trm.Malogger.App\Trm.MaLogger.App.csproj", "{CB8D7689-6BFA-4E89-97F4-616EDFCDA072}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "razor.Components", "razor.Components\razor.Components.csproj", "{93CA0B4D-3CCC-4A4A-ACEB-9348CC461468}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0FFD1580-062A-4C38-8A64-7C29EF9B9B40}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		azure-pipelines.yml = azure-pipelines.yml
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trm.MaLogger.MsData", "Trm.Matogen.MsData\Trm.MaLogger.MsData.csproj", "{D76FB7AD-EC3E-4389-81B4-E249379C9FA1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trm.MaLogger.Service", "Trm.MaLogger.Service\Trm.MaLogger.Service.csproj", "{BCA9E8FD-9122-41F4-B354-E37D20015E31}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trm.MaLogger.Api", "Trm.MaLogger.Api\Trm.MaLogger.Api.csproj", "{03A8BA36-ACEE-4547-969A-FFDB6E062FA8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trm.MaLogger.AUI", "Trm.MaLogger.AUI\Trm.MaLogger.AUI.csproj", "{F1FFA6CB-1A31-4C41-B26C-AC40E7951DA6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CB8D7689-6BFA-4E89-97F4-616EDFCDA072}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CB8D7689-6BFA-4E89-97F4-616EDFCDA072}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB8D7689-6BFA-4E89-97F4-616EDFCDA072}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CB8D7689-6BFA-4E89-97F4-616EDFCDA072}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93CA0B4D-3CCC-4A4A-ACEB-9348CC461468}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93CA0B4D-3CCC-4A4A-ACEB-9348CC461468}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93CA0B4D-3CCC-4A4A-ACEB-9348CC461468}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93CA0B4D-3CCC-4A4A-ACEB-9348CC461468}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D76FB7AD-EC3E-4389-81B4-E249379C9FA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D76FB7AD-EC3E-4389-81B4-E249379C9FA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D76FB7AD-EC3E-4389-81B4-E249379C9FA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D76FB7AD-EC3E-4389-81B4-E249379C9FA1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCA9E8FD-9122-41F4-B354-E37D20015E31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCA9E8FD-9122-41F4-B354-E37D20015E31}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCA9E8FD-9122-41F4-B354-E37D20015E31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCA9E8FD-9122-41F4-B354-E37D20015E31}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03A8BA36-ACEE-4547-969A-FFDB6E062FA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03A8BA36-ACEE-4547-969A-FFDB6E062FA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03A8BA36-ACEE-4547-969A-FFDB6E062FA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03A8BA36-ACEE-4547-969A-FFDB6E062FA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1FFA6CB-1A31-4C41-B26C-AC40E7951DA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1FFA6CB-1A31-4C41-B26C-AC40E7951DA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1FFA6CB-1A31-4C41-B26C-AC40E7951DA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1FFA6CB-1A31-4C41-B26C-AC40E7951DA6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {456BCBED-9EEB-4E98-AFB9-BC6FADBA72F8}
+	EndGlobalSection
+EndGlobal

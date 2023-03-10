@@ -1,0 +1,85 @@
+﻿@page "/account/signin"
+
+@inject UserService _db
+@inject IUserSession _session
+@inject IAlertService toast
+@inject NavigationManager nav
+
+    <!-- Bootstrap Modal Dialog -->
+    <div class="modal" tabindex="-1" style="display:block;" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: dodgerblue">
+                    <h5 class="modal-title">Login</h5>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <div class="input-group mb-1">
+                            <span class="input-group-text">Email</span>
+                            <input type="text" class="form-control" @onchange="FindUser"> @*@bind-value="@li.Email"*@
+                        </div>
+                            <div class="input-group mb-1">
+                                <span class="input-group-text">Password</span>
+                                <input type="password" class="form-control" @bind-value="@li.Password">
+                            </div>
+                        </div>
+                    <br />
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" @onclick="Cancel">Cancel</button>
+                    <button class="btn btn-primary btn-sm active" @onclick="@(() => nav.NavigateTo("/account/activate/0"))">Activate account</button>
+                        <button class="btn btn-primary btn-sm active" @onclick="Login">Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@code {
+    [CascadingParameter]
+    public ActiveUser user { get; set; } = null!;
+
+    [Parameter]
+    public Action? OnUserChange { get; set; }
+
+    protected LoginModel li { get; set; } = new LoginModel();
+
+    //protected async override Task OnInitializedAsync()
+    //{
+
+
+
+    //}
+
+    protected void Cancel()
+    {
+        nav.NavigateTo("/");
+    }
+
+    protected async Task Login()
+    {
+        try
+        {
+            await _session.Login(li);
+            OnUserChange?.Invoke();
+            nav.NavigateTo("/");
+
+        }
+        catch(Exception ex)
+        {
+            toast.Error(ex.Message);
+        }
+
+    }
+
+    protected async Task FindUser(ChangeEventArgs args)
+    {
+        if (args.Value == null) return;
+        li.Email = (string)args.Value;
+        var user  = await _db.GetUserByEmailAsync(li.Email);
+        if(user == null) return;
+        if(user.OTP != null)
+        {
+            nav.NavigateTo("/account/activate/0");
+        }
+    }
+}

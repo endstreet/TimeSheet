@@ -1,0 +1,99 @@
+﻿@page "/account/activate/{Otp}"
+
+@inject UserService _db
+@inject IUserSession _session
+@inject IAlertService toast
+@inject NavigationManager nav
+
+    <!-- Bootstrap Modal Dialog -->
+    <div class="modal" tabindex="-1" style="display:block;" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: dodgerblue">
+                    <h5 class="modal-title">Activate account</h5>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <div class="input-group mb-1">
+                            <span class="input-group-text">Email</span>
+                            <input type="text" class="form-control" @onchange="FindUser"> @*@bind-value="@li.Email"*@
+                        </div>
+                            <div class="input-group mb-1">
+                                <span class="input-group-text">OTP</span>
+                                <input type="text" class="form-control" @bind-value="@Otp">
+                            </div>
+                    </div>
+                    <br />
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" @onclick="Cancel">Cancel</button>
+                        <button class="btn btn-primary btn-sm active" @onclick="ActivateOtp">Activate account</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@code {
+    [CascadingParameter]
+    public ActiveUser user { get; set; } = null!;
+    [Parameter]
+    public Action? OnUserChange { get; set; }
+
+    [Parameter]
+    public string Otp { get; set; } = null!;
+
+    protected LoginModel li { get; set; } = new LoginModel();
+
+    protected async override Task OnInitializedAsync()
+    {
+        //Silent Activation
+        if(Otp == "0") Otp = "";
+        if (Otp != null)
+        {
+            if (Otp.Length == 5)
+            {
+                await SilentActivate();
+            }
+        }
+    }
+
+    protected async Task SilentActivate()
+    {
+        try
+        {
+            await _session.Activate(Otp);//Try Silent Activation
+        }
+        catch (Exception ex)
+        {
+            toast.Error(ex.Message);
+        }
+        OnUserChange?.Invoke();
+        toast.Info("Account activated.");
+        await Task.Delay(200);
+        nav.NavigateTo("/account/signin");
+
+    }
+
+    protected void Cancel()
+    {
+        nav.NavigateTo("/");
+    }
+
+    protected async Task ActivateOtp()
+    {
+        if (!string.IsNullOrEmpty(Otp))
+        {
+            await SilentActivate();
+        }
+
+    }
+
+    protected async Task FindUser(ChangeEventArgs args)
+    {
+        if (args.Value != null)
+        {
+            li.Email = (string)args.Value;
+            var user = await _db.GetUserByEmailAsync(li.Email);
+        }
+    }
+}

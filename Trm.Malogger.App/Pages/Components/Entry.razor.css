@@ -1,0 +1,19 @@
+﻿.time {
+    max-width: 100px;
+    min-width: 100px;
+}
+.ticker {
+    max-width: 120px;
+    min-width: 120px;
+}
+
+.Project {
+    max-width: 200px;
+    min-width: 150px;
+    background-color: white;
+}
+
+.Client {
+    max-width: 100px;
+    min-width: 100px;
+}

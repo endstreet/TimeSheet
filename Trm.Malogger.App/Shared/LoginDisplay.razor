@@ -1,0 +1,40 @@
+﻿@inject IUserSession _session
+@inject IAlertService toast
+@inject NavigationManager nav
+@namespace Trm.MaLogger.App.Shared
+
+
+@if (_session.IsloggedIn())
+{
+    <a>Hello @user.Name</a>
+    <button class="btn btn-secondary btn-sm" @onclick="Logout">Logout</button>
+}
+else
+{
+    <button class="btn btn-secondary btn-sm" @onclick="@(() => nav.NavigateTo("/account/register"))">Register</button>
+    <button class="btn btn-secondary btn-sm" @onclick="@(() => nav.NavigateTo("/account/signin"))">Login</button>
+}
+
+
+@code {
+
+    //Todo move to component base class
+    [CascadingParameter]
+    public ActiveUser user { get; set; } = null!;
+    [Parameter] 
+    public Action? OnUserChange { get; set; }
+
+    protected void Logout()
+    {
+        try
+        {
+            _session.Logout();
+            OnUserChange?.Invoke();
+            nav.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            toast.Error(ex.Message);
+        }
+    }
+}
